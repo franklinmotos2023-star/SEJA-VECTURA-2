@@ -1,0 +1,6 @@
+{
+  "name": "Vectura",
+  "description": "Landing page brutalista minimalista para a Vectura, focada em desenvolvimento de apps, mídias sociais e criação de conteúdo estratégico.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
