@@ -100,6 +100,9 @@ export default function App() {
   ]);
   const [whatsappPhone, setWhatsappPhone] = useState<string>("");
   const [selectedPlan, setSelectedPlan] = useState<"start" | "padrao" | "advanced">("padrao");
+  const [couponApplied, setCouponApplied] = useState<boolean>(false);
+  const [showCouponPopup, setShowCouponPopup] = useState<boolean>(true);
+  const [animateCheckout, setAnimateCheckout] = useState<boolean>(false);
 
   // State variables for "Personalizado" plan config
   const [customApps, setCustomApps] = useState<{
@@ -270,9 +273,9 @@ export default function App() {
       id: "pro-1",
       title: "Vectura Vendas 🛒",
       category: "apps",
-      tag: "Aplicativo de Vendas",
+      tag: "Site com Sistema Integrado",
       client: "Vectura Comercial",
-      description: "Catálogo completo de soluções de venda ultraveloz e integrada, com layout focado em conversão e usabilidade de ponta para equipes comerciais.",
+      description: "Site com sistema integrado voltado para lojas que vendem automóveis, acessórios e peças. Contém área de compras com carrinho, cupons e sincronização com a loja, além de painel admin para propostas, recibos/contratos automáticos e WhatsApp integrado.",
       metricLabel: "Média de Clientes Alcançados",
       metricValue: "20 clientes por dia",
       accentText: "Hospedado em Cloud Run estável",
@@ -409,10 +412,10 @@ export default function App() {
       id: "start",
       name: "Start",
       price: 139.70,
-      setupPrice: 259.80,
-      description: "Solução inicial para novos negócios. Sistema de vendas básico + presença digital.",
+      setupPrice: 281.00,
+      description: "Solução inicial para novos negócios. Site com sistema de vendas integrado + presença digital.",
       features: [
-        "🛒 Vectura Vendas + Estoque Local",
+        "🛒 Vectura Vendas (Site + Sistema)",
         "🌐 Gestão básica de Redes Sociais (1 post/sem)",
         "📁 Organização mensal de mídias inclusa",
         "💬 Suporte em horário comercial via WhatsApp",
@@ -424,10 +427,10 @@ export default function App() {
       id: "padrao",
       name: "Padrão",
       price: 319.60,
-      setupPrice: 559.70,
-      description: "Operação robusta e automatizada com controle completo de ponto, mídias e painéis de gestão.",
+      setupPrice: 605.00,
+      description: "Operação robusta e automatizada com site de vendas, controle de ponto, mídias e painéis de gestão.",
       features: [
-        "🛒 Vectura Vendas (PDV & Estoque)",
+        "🛒 Vectura Vendas (Site + Sistema)",
         "⏰ Vectura Ponto Eletrônico (Funcionários)",
         "🌐 Redes: 3 Posts + 1 Vídeo gravado/semana",
         "🎨 Identidade Visual Completa (Setup)",
@@ -452,22 +455,7 @@ export default function App() {
     }
   ];
 
-  // Auto-detect plan presets and sync the select state
-  useEffect(() => {
-    const isStartApps = !customApps.appPersonalizado && customApps.vendas && !customApps.mecflow && customApps.estoque && !customApps.quickService && !customApps.pontoEletronico;
-    const isStartMedia = customPostsPerWeek === 1 && customVideosPerWeek === 0 && !customVisualIdentity;
-    
-    const isPadraoApps = !customApps.appPersonalizado && customApps.vendas && !customApps.mecflow && !customApps.estoque && !customApps.quickService && customApps.pontoEletronico;
-    const isPadraoMedia = customPostsPerWeek === 3 && customVideosPerWeek === 1 && customVisualIdentity;
 
-    if (isStartApps && isStartMedia) {
-      if (selectedPlan !== "start") setSelectedPlan("start");
-    } else if (isPadraoApps && isPadraoMedia) {
-      if (selectedPlan !== "padrao") setSelectedPlan("padrao");
-    } else {
-      if (selectedPlan !== "advanced") setSelectedPlan("advanced");
-    }
-  }, [customApps, customPostsPerWeek, customVideosPerWeek, customVisualIdentity]);
 
   const handleSelectPlan = (planId: "start" | "padrao" | "advanced") => {
     setSelectedPlan(planId);
@@ -581,9 +569,9 @@ export default function App() {
     else if (customPostsPerWeek === 5) price += 199.90;
 
     // Social media videos
-    if (customVideosPerWeek === 1) price += 99.90;
-    else if (customVideosPerWeek === 2) price += 179.90;
-    else if (customVideosPerWeek === 3) price += 249.90;
+    if (customVideosPerWeek === 1) price += 149.90;
+    else if (customVideosPerWeek === 2) price += 269.90;
+    else if (customVideosPerWeek === 3) price += 374.90;
 
     return parseFloat(price.toFixed(2));
   };
@@ -591,54 +579,107 @@ export default function App() {
   const getCustomPlanOneTimePrice = () => {
     let price = 0;
     
-    // One-time Setup/Adesão fees for the systems
-    if (customApps.appPersonalizado) price += 450.00;
-    if (customApps.vendas) price += 199.90;
+    // One-time Setup/Adesão fees for the systems (increased by 8% rounded)
+    if (customApps.appPersonalizado) price += 499.90;
+    if (customApps.vendas) price += 216.00;
     
-    // Other systems have an Adesão/Setup fee of R$ 59,90 (one-time)
-    if (customApps.mecflow) price += 59.90;
-    if (customApps.estoque) price += 59.90;
-    if (customApps.quickService) price += 59.90;
-    if (customApps.pontoEletronico) price += 59.90;
+    // Other systems have an Adesão/Setup fee of R$ 65,00 (one-time, increased from R$ 59,90)
+    if (customApps.mecflow) price += 65.00;
+    if (customApps.estoque) price += 65.00;
+    if (customApps.quickService) price += 65.00;
+    if (customApps.pontoEletronico) price += 65.00;
 
-    if (customVisualIdentity) price += 299.90;
+    if (customVisualIdentity) price += 399.90;
     return parseFloat(price.toFixed(2));
   };
 
   // Calculate pricing based on plan + addons
+  const getActivePlanOneTimePrice = () => {
+    if (selectedPlan === "start") {
+      return couponApplied ? 252.90 : 281.00;
+    }
+    if (selectedPlan === "padrao") {
+      return couponApplied ? 544.50 : 605.00;
+    }
+    // "advanced" (Personalizado)
+    const basePrice = getCustomPlanOneTimePrice();
+    return couponApplied ? parseFloat((basePrice * 0.9).toFixed(2)) : basePrice;
+  };
+
+  const getActivePlanMonthlyPrice = () => {
+    if (selectedPlan === "start") {
+      return couponApplied ? 125.73 : 139.70;
+    }
+    if (selectedPlan === "padrao") {
+      return couponApplied ? 287.64 : 319.60;
+    }
+    // "advanced" (Personalizado)
+    const basePrice = getCustomPlanMonthlyPrice();
+    return couponApplied ? parseFloat((basePrice * 0.9).toFixed(2)) : basePrice;
+  };
+
   const getActivePlanPrice = () => {
-    return getCustomPlanMonthlyPrice();
+    return getActivePlanMonthlyPrice();
   };
 
   const getWhatsappMessageDraft = () => {
     const basePlan = plans.find(p => p.id === selectedPlan);
     if (!basePlan) return "";
 
-    const planLabel = selectedPlan === "start" ? "Start" : selectedPlan === "padrao" ? "Padrão" : "Personalizado";
-    const baseText = `Olá, estou no site e gostaria de fechar o Plano ${planLabel} com a Vectura.`;
+    const planLabel = selectedPlan === "start" ? "Start 🚀" : selectedPlan === "padrao" ? "Padrão ⭐" : "Personalizado / Sob Medida 🛠️";
+    let messageText = `Olá Vectura! Visitei o site e escolhi o *PLANO ${planLabel}*.\n\n`;
+
+    if (selectedPlan === "start") {
+      messageText += `*Escopo do Plano Start:*\n`;
+      messageText += `- Sistema de Vendas PDV (Manutenção inclusa)\n`;
+      messageText += `- Controle de Estoque Local integrado\n`;
+      messageText += `- 1 Post Semanal Estratégico nas redes sociais\n`;
+      messageText += `- Suporte premium em horário comercial\n`;
+    } else if (selectedPlan === "padrao") {
+      messageText += `*Escopo do Plano Padrão:*\n`;
+      messageText += `- Sistema de Vendas PDV & Gestão Integrada\n`;
+      messageText += `- Vectura Ponto Eletrônico integrado\n`;
+      messageText += `- Gestão de Redes Sociais: 3 Posts + 1 Vídeo por semana\n`;
+      messageText += `- Identidade Visual Completa & Renovação de Instagram\n`;
+      messageText += `- Suporte Comercial estendido\n`;
+    } else {
+      // Advanced
+      messageText += `*Escopo do Plano Personalizado:*\n`;
+      const selectedAppsList = [];
+      if (customApps.appPersonalizado) selectedAppsList.push("- Criação de App Personalizado (Adesão + R$ 49,90/mês)");
+      if (customApps.vendas) selectedAppsList.push("- Vectura Vendas PDV (Adesão + R$ 39,90/mês)");
+      if (customApps.mecflow) selectedAppsList.push("- Vectura MecFlow (Adesão + R$ 49,90/mês)");
+      if (customApps.estoque) selectedAppsList.push("- Vectura Controle de Estoque (Adesão + R$ 49,90/mês)");
+      if (customApps.quickService) selectedAppsList.push("- Vectura Quick Service (Adesão + R$ 49,90/mês)");
+      if (customApps.pontoEletronico) selectedAppsList.push("- Vectura Ponto Eletrônico (Adesão + R$ 49,90/mês)");
+
+      if (selectedAppsList.length > 0) {
+        messageText += `*Softwares Selecionados:*\n${selectedAppsList.join("\n")}\n`;
+      }
+
+      const selectedMediaList = [];
+      if (customPostsPerWeek > 0) selectedMediaList.push(`- Gestão de Redes: ${customPostsPerWeek} posts/semana`);
+      if (customVideosPerWeek > 0) selectedMediaList.push(`- Gestão de Redes: ${customVideosPerWeek} vídeos/semana`);
+      if (customVisualIdentity) selectedMediaList.push("- Identidade Visual & Renovação de Instagram");
+
+      if (selectedMediaList.length > 0) {
+        messageText += `*Mídias & Redes Selecionadas:*\n${selectedMediaList.join("\n")}\n`;
+      }
+    }
+
+    const oneTimeTotal = getActivePlanOneTimePrice();
+    const monthlyTotal = getActivePlanMonthlyPrice();
+
+    messageText += `\n*Investimento Previsto:*`;
+    messageText += `\n- Setup / Pagamento Único: R$ ${oneTimeTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
+    messageText += `\n- Mensalidade Recorrente: R$ ${monthlyTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}/mês`;
     
-    const selectedAppsList = [];
-    if (customApps.appPersonalizado) selectedAppsList.push("- Criação de App Personalizado (Adesão: R$ 450,00 + R$ 49,90/mês)");
-    if (customApps.vendas) selectedAppsList.push("- Vectura Vendas (Adesão: R$ 199,90 + R$ 39,90/mês)");
-    if (customApps.mecflow) selectedAppsList.push("- Vectura MecFlow (Adesão: R$ 59,90 + R$ 49,90/mês)");
-    if (customApps.estoque) selectedAppsList.push("- Vectura Controle de Estoque (Adesão: R$ 59,90 + R$ 49,90/mês)");
-    if (customApps.quickService) selectedAppsList.push("- Vectura Quick Service (Adesão: R$ 59,90 + R$ 49,90/mês)");
-    if (customApps.pontoEletronico) selectedAppsList.push("- Vectura Ponto Eletrônico (Adesão: R$ 59,90 + R$ 49,90/mês)");
+    if (couponApplied) {
+      messageText += `\n_(Cupom VECTURA10 de 10% de desconto aplicado com sucesso!)_`;
+    }
 
-    const selectedMediaList = [];
-    if (customPostsPerWeek > 0) selectedMediaList.push(`- Gestão de Redes: ${customPostsPerWeek} posts/semana (R$ ${customPostsPerWeek === 1 ? "49,90" : customPostsPerWeek === 2 ? "89,90" : customPostsPerWeek === 3 ? "129,90" : customPostsPerWeek === 4 ? "169,90" : "199,90"}/mês)`);
-    if (customVideosPerWeek > 0) selectedMediaList.push(`- Gestão de Redes: ${customVideosPerWeek} vídeos/semana (R$ ${customVideosPerWeek === 1 ? "99,90" : customVideosPerWeek === 2 ? "179,90" : "249,90"}/mês)`);
-    if (customVisualIdentity) selectedMediaList.push("- Identidade Visual & Renovação de Insta (Único: R$ 299,90)");
-
-    const monthlyTotal = getCustomPlanMonthlyPrice();
-    const oneTimeTotal = getCustomPlanOneTimePrice();
-
-    const appsSection = selectedAppsList.length > 0 ? `\n\n💻 Softwares Selecionados:\n${selectedAppsList.join("\n")}` : "";
-    const mediaSection = selectedMediaList.length > 0 ? `\n\n🎨 Mídias & Redes Selecionadas:\n${selectedMediaList.join("\n")}` : "";
-
-    const totalsText = `\n\n💰 Resumo Financeiro:\n- Pagamento Único: R$ ${oneTimeTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}\n- Mensalidade: R$ ${monthlyTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}/mês.`;
-
-    return `${baseText}${appsSection}${mediaSection}${totalsText}\n\nGostaria de iniciar o alinhamento de escopo!`;
+    messageText += `\n\nGostaria de iniciar o alinhamento de escopo e liberação do acesso!`;
+    return messageText;
   };
 
   const getCustomWhatsappLink = () => {
@@ -684,23 +725,49 @@ export default function App() {
         />
       </div>
 
-      {/* Floating immersive lock-in indicator */}
+      {/* Floating Discount Coupon Popup */}
       <AnimatePresence>
-        {isInSimulador && (
+        {showCouponPopup && (
           <motion.div
-            initial={{ opacity: 0, x: 100 }}
+            initial={{ opacity: 0, x: -100 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 100 }}
+            exit={{ opacity: 0, x: -100 }}
             transition={{ type: "spring", stiffness: 350, damping: 25 }}
-            className="fixed bottom-6 right-6 z-[100] max-w-xs border-4 border-black bg-black text-white p-4 shadow-[6px_6px_0px_#7C3AED] font-mono text-xs rounded-none"
+            className="fixed bottom-6 left-6 z-[100] max-w-sm border-4 border-black bg-[#0E0D12] text-white p-4 shadow-[6px_6px_0px_#22C55E] font-mono text-xs rounded-none"
           >
-            <div className="flex items-center gap-2 mb-1.5 text-[#FACC15]">
-              <Zap className="w-4 h-4 fill-current animate-bounce" />
-              <span className="font-bold uppercase tracking-wider text-[10px]">ÁREA DE ACELERAÇÃO ATIVA</span>
+            <div className="flex justify-between items-start gap-4 mb-2">
+              <div className="flex items-center gap-2 text-[#22C55E]">
+                <Sparkles className="w-4 h-4 text-[#22C55E]" />
+                <span className="font-bold uppercase tracking-wider text-[10px]">CUPOM EXCLUSIVO ATIVO!</span>
+              </div>
+              <button 
+                onClick={() => setShowCouponPopup(false)}
+                className="text-neutral-400 hover:text-white font-bold text-sm bg-neutral-800 hover:bg-neutral-700 w-5 h-5 flex items-center justify-center border border-neutral-600 cursor-pointer"
+              >
+                ×
+              </button>
             </div>
-            <p className="text-neutral-300 leading-tight text-[11px] font-sans">
-              Monte o seu plano e envie o escopo diretamente pelo WhatsApp. Nosso especialista já está de prontidão.
+            <p className="text-neutral-300 leading-tight text-[11px] font-sans mb-3">
+              Garantimos <strong className="text-[#22C55E]">10% DE DESCONTO EM TODOS OS PLANOS</strong> com o cupom <strong className="text-[#22C55E]">VECTURA10</strong>!
             </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  setCouponApplied(true);
+                  setShowCouponPopup(false);
+                  setAnimateCheckout(true);
+                  setTimeout(() => setAnimateCheckout(false), 2200);
+                  const targetEl = document.getElementById("whatsapp-checkout-area");
+                  if (targetEl) targetEl.scrollIntoView({ behavior: "smooth" });
+                }}
+                className={`flex-1 py-1 px-3 font-bold border border-black text-[10px] uppercase text-black font-mono transition-all ${
+                  couponApplied ? "bg-[#22C55E] cursor-default" : "bg-[#FACC15] hover:bg-[#E2B90F] cursor-pointer"
+                }`}
+                disabled={couponApplied}
+              >
+                {couponApplied ? "✓ Desconto de 10% Aplicado!" : "🎟️ Resgatar Desconto de 10%"}
+              </button>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -842,311 +909,135 @@ export default function App() {
                     <span className="text-neutral-500 font-bold ml-2">vectura-oferta-especial.sh</span>
                   </div>
 
-                  {/* Plan Tabs */}
-                  <div className="grid grid-cols-3 gap-1 mb-4">
-                    {[
-                      { id: "start", label: "Start 🚀" },
-                      { id: "padrao", label: "Padrão ⭐" },
-                      { id: "advanced", label: "Personalizado 🛠️" }
-                    ].map(tab => (
-                      <button
-                        key={tab.id}
-                        id={`preview-tab-${tab.id}`}
-                        onClick={() => handleSelectPlan(tab.id as any)}
-                        className={`py-2 px-1 text-[10px] md:text-xs font-mono font-bold uppercase border-2 border-black shadow-[1.5px_1.5px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[0px_0px_0px_#000000] text-center leading-tight cursor-pointer truncate
-                          ${selectedPlan === tab.id 
-                            ? getAccentBg() 
-                            : "bg-neutral-50 hover:bg-neutral-100 text-black"}`}
-                        title={tab.label}
-                      >
-                        {tab.label}
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* Sandbox Window */}
-                  <div className="border-2 border-black bg-[#F3F4F6] p-4 font-mono text-xs rounded-xs min-h-[350px] flex flex-col justify-between">
-                    
-                    {/* Render active plan summary details */}
-                    {selectedPlan === "start" && (
-                      <div className="flex flex-col justify-between h-full gap-3">
-                        <div>
-                          <div className="flex justify-between items-center bg-black text-[#66FF66] p-2 mb-3 text-[10px]">
-                            <span>PLANO START (INDIVIDUAL)</span>
-                            <span className="animate-pulse">● DESCONTO APLICADO</span>
-                          </div>
-                          
-                          <h4 className="font-sans font-black text-lg text-black uppercase mb-1">🚀 VECTURA START</h4>
-                          <p className="text-neutral-600 text-[11px] leading-tight mb-4">
-                            Ideal para novos negócios estabelecerem presença digital e faturarem com vendas organizadas e mídias sociais.
-                          </p>
-
-                          {/* Promotional Price Highlight */}
-                          <div className="bg-amber-100 border border-black p-3 mb-4 flex items-center justify-between shadow-[2px_2px_0px_#000000]">
-                            <div>
-                              <span className="text-[9px] text-neutral-500 line-through block">
-                                De R$ {((plans.find(p => p.id === "start")?.price || 209.60) / 0.6).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / mês
-                              </span>
-                              <span className="text-lg font-black text-rose-600 block leading-tight">
-                                Por R$ {(plans.find(p => p.id === "start")?.price || 209.60).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / mês
-                              </span>
-                            </div>
-                            <span className="bg-rose-500 text-white text-[10px] font-black px-2 py-1 border border-black tracking-wider uppercase rotate-[-2deg]">
-                              40% OFF
-                            </span>
-                          </div>
-
-                          <div className="space-y-1.5 text-[11px] text-neutral-700">
-                            <div className="flex items-center gap-2 font-bold uppercase text-[9px]">
-                              <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[3]" /> Vectura Vendas + Estoque Local
-                            </div>
-                            <div className="flex items-center gap-2 font-bold uppercase text-[9px]">
-                              <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[3]" /> Mídias: 1 Post Estratégico/semana
-                            </div>
-                            <div className="flex items-center gap-2 font-bold uppercase text-[9px]">
-                              <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[3]" /> Organização mensal de conteúdo inclusa
-                            </div>
-                            <div className="flex items-center gap-2 font-bold uppercase text-[9px]">
-                              <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[3]" /> Suporte em horário comercial WhatsApp
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="text-[10px] text-neutral-400 italic text-center pt-2 border-t border-dashed border-neutral-300">
-                          *Adesão única do software de R$ 199,90 no setup.
-                        </div>
-                      </div>
-                    )}
-
-                    {selectedPlan === "padrao" && (
-                      <div className="flex flex-col justify-between h-full gap-3">
-                        <div>
-                          <div className="flex justify-between items-center bg-black text-yellow-400 p-2 mb-3 text-[10px]">
-                            <span>PLANO PADRÃO (RECOMENDADO)</span>
-                            <span className="animate-pulse">★ CAMPEÃO DE VENDAS</span>
-                          </div>
-                          
-                          <h4 className="font-sans font-black text-lg text-black uppercase mb-1">⭐ VECTURA PADRÃO</h4>
-                          <p className="text-neutral-600 text-[11px] leading-tight mb-4">
-                            Sua operação rodando de forma robusta e automatizada. Ponto eletrônico, mídias integradas e painéis de BI avançados.
-                          </p>
-
-                          {/* Promotional Price Highlight */}
-                          <div className="bg-amber-100 border border-black p-3 mb-4 flex items-center justify-between shadow-[2px_2px_0px_#000000]">
-                            <div>
-                              <span className="text-[9px] text-neutral-500 line-through block">
-                                De R$ {((plans.find(p => p.id === "padrao")?.price || 389.50) / 0.6).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / mês
-                              </span>
-                              <span className="text-lg font-black text-rose-600 block leading-tight">
-                                Por R$ {(plans.find(p => p.id === "padrao")?.price || 389.50).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / mês
-                              </span>
-                            </div>
-                            <span className="bg-rose-500 text-white text-[10px] font-black px-2 py-1 border border-black tracking-wider uppercase rotate-[-2deg] animate-bounce">
-                              40% OFF
-                            </span>
-                          </div>
-
-                          <div className="space-y-1.5 text-[11px] text-neutral-700">
-                            <div className="flex items-center gap-2 font-bold uppercase text-[9px]">
-                              <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[3]" /> Vectura Vendas PDV e Gestão Integrada
-                            </div>
-                            <div className="flex items-center gap-2 font-bold uppercase text-[9px]">
-                              <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[3]" /> Vectura Ponto Eletrônico (Funcionários)
-                            </div>
-                            <div className="flex items-center gap-2 font-bold uppercase text-[9px]">
-                              <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[3]" /> Redes: 3 Posts + 1 Vídeo gravado/semana
-                            </div>
-                            <div className="flex items-center gap-2 font-bold uppercase text-[9px]">
-                              <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[3]" /> Identidade Visual Completa & Suporte 24/7
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="text-[10px] text-neutral-400 italic text-center pt-2 border-t border-dashed border-neutral-300">
-                          *Adesão e reestruturação única do setup por R$ 499,80.
-                        </div>
-                      </div>
-                    )}
-
-                    {selectedPlan === "advanced" && (
-                      <div className="flex flex-col justify-between h-full gap-3">
-                        <div>
-                          <div className="flex justify-between items-center bg-black text-[#58A6FF] p-2 mb-2 text-[10px]">
-                            <span>PLANO PERSONALIZADO (SIMULADOR DIRETO)</span>
-                            <span className="animate-pulse">● SELEÇÃO ATIVA</span>
-                          </div>
-
-                          <div className="bg-amber-100 border border-black p-2.5 mb-3 flex items-center justify-between shadow-[2px_2px_0px_#000000]">
-                            <div>
-                              <span className="text-[9px] text-neutral-500 line-through block leading-none mb-0.5">
-                                De R$ {((getCustomPlanMonthlyPrice() || 199.90) / 0.6).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} /mês
-                              </span>
-                              <span className="text-base font-black text-rose-600 block leading-tight">
-                                Por R$ {getCustomPlanMonthlyPrice().toLocaleString("pt-BR", { minimumFractionDigits: 2 })} /mês
-                              </span>
-                              {getCustomPlanOneTimePrice() > 0 && (
-                                <span className="text-[9px] text-neutral-600 block leading-none mt-1">
-                                  + R$ {getCustomPlanOneTimePrice().toLocaleString("pt-BR", { minimumFractionDigits: 2 })} Setup Único
-                                </span>
-                              )}
-                            </div>
-                            <span className="bg-rose-500 text-white text-[9px] font-black px-1.5 py-0.5 border border-black tracking-wider uppercase rotate-[-2deg] shrink-0">
-                              40% OFF
-                            </span>
-                          </div>
-
-                          {/* Quick Configurator inside Sandbox */}
-                          <div className="space-y-3 bg-white border border-black p-2.5 rounded-xs">
-                            {/* Subtitle / Label */}
-                            <span className="font-bold text-neutral-800 uppercase block text-[10px] border-b border-black pb-1 mb-2">
-                              Configure seu plano em tempo real:
-                            </span>
-
-                            {/* Grid 1: Softwares & Apps */}
-                            <div className="space-y-1.5">
-                              <span className="text-[9px] font-bold text-neutral-400 block uppercase tracking-wider">// Softwares (R$ 49,90/mês manut. inclusa)</span>
-                              <div className="grid grid-cols-2 gap-1 text-[10px]">
-                                {[
-                                  { key: "vendas", label: "🛒 Vendas", desc: "PDV (R$ 199 Setup)" },
-                                  { key: "pontoEletronico", label: "⏰ Ponto", desc: "R$ 59,90/mês" },
-                                  { key: "mecflow", label: "🧰 Mecflow", desc: "R$ 59,90/mês" },
-                                  { key: "estoque", label: "📦 Estoque", desc: "R$ 59,90/mês" },
-                                  { key: "quickService", label: "🏍️ Quick Svc", desc: "R$ 59,90/mês" },
-                                  { key: "appPersonalizado", label: "📱 App Pers.", desc: "Sob Demanda (R$ 450 Setup)" },
-                                ].map((app) => {
-                                  const isActive = customApps[app.key as keyof typeof customApps];
-                                  return (
-                                    <button
-                                      key={app.key}
-                                      id={`quick-app-${app.key}`}
-                                      type="button"
-                                      onClick={() => setCustomApps(prev => ({ ...prev, [app.key]: !isActive }))}
-                                      className={`p-1.5 border text-left leading-tight transition-all rounded-xs cursor-pointer flex items-start gap-1
-                                        ${isActive 
-                                          ? "border-black bg-black text-[#66FF66] font-bold" 
-                                          : "border-neutral-200 bg-neutral-50 text-neutral-600 hover:bg-neutral-100"}`}
-                                      title={app.desc}
-                                    >
-                                      <span className="text-[9px] leading-none">{isActive ? "✓" : "☐"}</span>
-                                      <div className="flex flex-col leading-none">
-                                        <span className="text-[9px] font-bold">{app.label}</span>
-                                        <span className="text-[7px] text-neutral-400 font-normal truncate max-w-[100px]">{app.desc}</span>
-                                      </div>
-                                    </button>
-                                  );
-                                })}
-                              </div>
-                            </div>
-
-                            {/* Divider line */}
-                            <div className="border-t border-dashed border-neutral-300 my-2" />
-
-                            {/* Grid 2: Marketing & Redes */}
-                            <div className="space-y-2">
-                              <span className="text-[9px] font-bold text-neutral-400 block uppercase tracking-wider">// Mídias & Redes Sociais</span>
-                              <div className="grid grid-cols-2 gap-2 text-[10px]">
-                                {/* Posts selector */}
-                                <div className="space-y-1">
-                                  <span className="text-[8px] text-neutral-500 font-bold block uppercase leading-none">Posts/Semana:</span>
-                                  <div className="flex items-center border border-black rounded-xs overflow-hidden h-7 bg-neutral-50">
-                                    <button
-                                      id="quick-posts-minus"
-                                      type="button"
-                                      onClick={() => setCustomPostsPerWeek(prev => Math.max(0, prev - 1))}
-                                      className="px-2 h-full hover:bg-neutral-200 font-bold text-center border-r border-black"
-                                    >
-                                      -
-                                    </button>
-                                    <span className="flex-1 text-center font-bold font-mono text-[10px]">
-                                      {customPostsPerWeek}
-                                    </span>
-                                    <button
-                                      id="quick-posts-plus"
-                                      type="button"
-                                      onClick={() => setCustomPostsPerWeek(prev => Math.min(5, prev + 1))}
-                                      className="px-2 h-full hover:bg-neutral-200 font-bold text-center border-l border-black"
-                                    >
-                                      +
-                                    </button>
-                                  </div>
-                                </div>
-
-                                {/* Videos selector */}
-                                <div className="space-y-1">
-                                  <span className="text-[8px] text-neutral-500 font-bold block uppercase leading-none">Vídeos/Semana:</span>
-                                  <div className="flex items-center border border-black rounded-xs overflow-hidden h-7 bg-neutral-50">
-                                    <button
-                                      id="quick-videos-minus"
-                                      type="button"
-                                      onClick={() => setCustomVideosPerWeek(prev => Math.max(0, prev - 1))}
-                                      className="px-2 h-full hover:bg-neutral-200 font-bold text-center border-r border-black"
-                                    >
-                                      -
-                                    </button>
-                                    <span className="flex-1 text-center font-bold font-mono text-[10px]">
-                                      {customVideosPerWeek}
-                                    </span>
-                                    <button
-                                      id="quick-videos-plus"
-                                      type="button"
-                                      onClick={() => setCustomVideosPerWeek(prev => Math.min(3, prev + 1))}
-                                      className="px-2 h-full hover:bg-neutral-200 font-bold text-center border-l border-black"
-                                    >
-                                      +
-                                    </button>
-                                  </div>
-                                </div>
-                              </div>
-
-                              {/* Identidade visual toggle inside card */}
-                              <button
-                                id="quick-visual-identity"
-                                type="button"
-                                onClick={() => setCustomVisualIdentity(prev => !prev)}
-                                className={`w-full p-1.5 border text-left leading-tight transition-all rounded-xs cursor-pointer flex items-center justify-between text-[10px]
-                                  ${customVisualIdentity 
-                                    ? "border-black bg-black text-[#66FF66] font-bold" 
-                                    : "border-neutral-200 bg-neutral-50 text-neutral-600 hover:bg-neutral-100"}`}
-                              >
-                                <div className="flex items-center gap-1.5">
-                                  <span>{customVisualIdentity ? "✓" : "☐"}</span>
-                                  <span className="text-[9px] font-bold">Identidade Visual & Insta</span>
-                                </div>
-                                <span className="text-[8px] font-mono font-normal block opacity-85">R$ 299,90 Setup</span>
-                              </button>
-                            </div>
-
-                          </div>
-                        </div>
-
-                        <div className="text-[10px] text-neutral-400 italic text-center pt-2 border-t border-dashed border-neutral-300">
-                          *Ajustes sincronizados instantaneamente com o simulador detalhado abaixo!
-                        </div>
-                      </div>
-                    )}
-
-                  </div>
-                </div>
-
-                <div className="mt-4 flex flex-col gap-3">
-                  <a
-                    id="hero-plan-demo-cta"
-                    href={getCustomWhatsappLink()}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`w-full py-3.5 font-bold border-2 border-black text-center text-xs md:text-sm uppercase tracking-wider transition-all shadow-[4px_4px_0px_#000000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[0px_0px_0px_#000000] flex items-center justify-center gap-2 cursor-pointer ${getAccentBg()}`}
-                  >
-                    ⚡ CONTRATAR PLANO COM 40% OFF
-                  </a>
-
-                  <div className="bg-amber-50 border-2 border-black p-3 text-[11px] text-neutral-800 rounded-sm font-mono flex gap-2.5 items-start">
-                    <span className="text-sm">💡</span>
-                    <p>
-                      <strong>Sincronização Ativa:</strong> As abas acima mudam os detalhes e configuram automaticamente as opções da esquerda para você ver a composição ideal!
+                  {/* High-Converting Sales Pitch */}
+                  <div className="space-y-4 mb-6">
+                    <h3 className="font-display font-black text-xl uppercase tracking-tight text-black leading-tight">
+                      🚀 ACELERE SUA EMPRESA AGORA
+                    </h3>
+                    <p className="text-xs text-neutral-700 leading-relaxed font-semibold">
+                      Escolha um dos nossos planos de aceleração digital abaixo. Automatize sua gestão com nossos softwares e impulsione seu faturamento com mídias sociais que de fato geram clientes.
                     </p>
+
+                    {/* Simple high-converting card options */}
+                    <div className="space-y-3">
+                      {/* Plan Start row card */}
+                      <div className="border-2 border-black p-3.5 bg-neutral-50 hover:bg-neutral-100/50 transition-colors flex flex-col justify-between gap-2.5 relative">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <span className="text-[9px] font-mono font-black text-neutral-400 uppercase">[ PLANO START ]</span>
+                            <h4 className="font-sans font-black text-sm uppercase text-black">VECTURA START 🚀</h4>
+                          </div>
+                          <div className="text-right leading-none">
+                            {couponApplied ? (
+                              <>
+                                <span className="text-[9px] line-through text-red-500 block font-bold">R$ 139,70/mês</span>
+                                <span className="text-sm font-black text-[#22C55E] font-mono">R$ 125,73/mês</span>
+                              </>
+                            ) : (
+                              <>
+                                <span className="text-[9px] line-through text-neutral-400 block font-bold">De R$ 232,80/mês</span>
+                                <span className="text-sm font-black text-[#7C3AED] font-mono">R$ 139,70/mês</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                        <p className="text-[10px] text-neutral-600 font-medium leading-tight">
+                          Ideal para estruturar e validar processes. Site com Vendas PDV + Estoque Local + 1 Post Semanal Estratégico.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedPlan("start");
+                            setAnimateCheckout(true);
+                            setTimeout(() => setAnimateCheckout(false), 2200);
+                            const targetEl = document.getElementById("nossos-planos") || document.getElementById("whatsapp-checkout-area");
+                            if (targetEl) targetEl.scrollIntoView({ behavior: "smooth" });
+                          }}
+                          className={`w-full py-2 font-mono text-[10px] font-black uppercase border-2 border-black shadow-[2px_2px_0px_#000000] hover:shadow-[1px_1px_0px_#000000] hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer text-center ${getAccentBg()}`}
+                        >
+                          Selecionar Plano Start &amp; Ir para WhatsApp →
+                        </button>
+                      </div>
+
+                      {/* Plan Padrão row card */}
+                      <div className="border-2 border-black p-3.5 bg-[#FFFDF5] hover:bg-amber-50/50 transition-colors flex flex-col justify-between gap-2.5 relative">
+                        <div className="absolute -top-2.5 right-4 bg-black text-white text-[8px] font-mono font-black uppercase px-2 py-0.5 border border-black shadow-[1.5px_1.5px_0px_rgba(0,0,0,0.15)]">
+                          ⭐ Mais Vendido
+                        </div>
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <span className="text-[9px] font-mono font-black text-amber-600 uppercase">[ PLANO PADRÃO ]</span>
+                            <h4 className="font-sans font-black text-sm uppercase text-black">VECTURA PADRÃO ⭐</h4>
+                          </div>
+                          <div className="text-right leading-none">
+                            {couponApplied ? (
+                              <>
+                                <span className="text-[9px] line-through text-red-500 block font-bold">R$ 319,60/mês</span>
+                                <span className="text-sm font-black text-[#22C55E] font-mono">R$ 287,64/mês</span>
+                              </>
+                            ) : (
+                              <>
+                                <span className="text-[9px] line-through text-neutral-400 block font-bold">De R$ 532,60/mês</span>
+                                <span className="text-sm font-black text-rose-600 font-mono">R$ 319,60/mês</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                        <p className="text-[10px] text-neutral-600 font-medium leading-tight">
+                          Operação completa e otimizada. Vendas PDV + Ponto Eletrônico + Redes (3 Posts + 1 Vídeo/Semana) + Identidade Visual completa.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedPlan("padrao");
+                            setAnimateCheckout(true);
+                            setTimeout(() => setAnimateCheckout(false), 2200);
+                            const targetEl = document.getElementById("nossos-planos") || document.getElementById("whatsapp-checkout-area");
+                            if (targetEl) targetEl.scrollIntoView({ behavior: "smooth" });
+                          }}
+                          className="w-full py-2 font-mono text-[10px] font-black uppercase border-2 border-black shadow-[2px_2px_0px_#000000] hover:shadow-[1px_1px_0px_#000000] hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer text-center bg-black text-white hover:bg-neutral-800"
+                        >
+                          Selecionar Plano Padrão &amp; Ir para WhatsApp →
+                        </button>
+                      </div>
+
+                      {/* Plan Personalizado row card */}
+                      <div className="border-2 border-black p-3.5 bg-neutral-900 text-white hover:bg-neutral-850 transition-all flex flex-col justify-between gap-2.5 relative">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <span className="text-[9px] font-mono font-black text-neutral-400 uppercase">[ PERSONALIZADO ]</span>
+                            <h4 className="font-sans font-black text-sm uppercase text-white">SOB MEDIDA 🛠️</h4>
+                          </div>
+                          <div className="text-right leading-none">
+                            <span className="text-xs font-black text-green-400 font-mono">SOB CONSULTA</span>
+                          </div>
+                        </div>
+                        <p className="text-[10px] text-neutral-300 font-medium leading-tight">
+                          Monte o setup perfeito para o seu negócio. Customize aplicativos, quantidade de posts semanais e frentes de suporte.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedPlan("advanced");
+                            const targetEl = document.getElementById("personalizacao-simulador") || document.getElementById("nossos-planos");
+                            if (targetEl) targetEl.scrollIntoView({ behavior: "smooth" });
+                          }}
+                          className="w-full py-2 font-mono text-[10px] font-black uppercase border-2 border-white text-black bg-white hover:bg-neutral-100 shadow-[2px_2px_0px_rgba(255,255,255,0.2)] hover:shadow-[1px_1px_0px_rgba(255,255,255,0.2)] hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer text-center"
+                        >
+                          Configurar Escopo Personalizado →
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
+                {/* Bottom Trust Badge */}
+                <div className="bg-amber-50 border-2 border-black p-3 text-[10px] text-neutral-800 rounded-xs font-mono flex gap-2 items-start mt-2">
+                  <span className="text-xs">🔒</span>
+                  <p className="leading-tight font-semibold">
+                    <strong>Garantia de Onboarding:</strong> Todos os planos incluem implementação guiada, suporte premium no WhatsApp e manutenções contínuas transparentes.
+                  </p>
+                </div>
               </div>
             </div>
 
@@ -1570,116 +1461,288 @@ export default function App() {
             </div>
           )}
 
-          <div className={`border-b-4 pb-4 mb-12 transition-colors duration-500 ${isInSimulador ? "border-neutral-800" : "border-black"}`}>
+          <div className={`border-b-4 pb-4 mb-8 transition-colors duration-500 ${isInSimulador ? "border-neutral-800" : "border-black"}`}>
             <span className={`font-mono text-sm uppercase tracking-widest font-bold block transition-colors duration-500 ${isInSimulador ? "text-neutral-400" : "text-neutral-500"}`}>
               // INVESTIMENTO CONSCIENTE
             </span>
             <h2 className={`font-display font-black text-3xl md:text-5xl tracking-tight uppercase transition-colors duration-500 ${isInSimulador ? "text-white" : "text-black"}`}>
-              PLANOS DE ACELERAÇÃO & SIMULADOR.
+              PLANOS DE ACELERAÇÃO & OFERTAS.
             </h2>
+          </div>
+
+          {/* REDESIGNED #builder-area (TOP COMMERCIAL CONVERSION BANNER) */}
+          <div 
+            id="builder-area" 
+            className={`border-4 border-black bg-white text-black shadow-[8px_8px_0px_#000000] hover:${getAccentShadowClass()} transition-all duration-300 relative rounded-none p-6 md:p-8 mb-12 scroll-mt-24 z-10`}
+          >
+            {/* Top Badge alert */}
+            <div className="absolute -top-3.5 left-6 bg-red-600 text-white font-mono text-[10px] font-black uppercase tracking-wider px-3 py-1 border-2 border-black shadow-[2px_2px_0px_#000000] animate-pulse">
+              🔥 Oferta Comercial Limitada
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+              {/* Left Column: Direct Call-to-Action Sales Copy */}
+              <div className="lg:col-span-7 space-y-4 text-left">
+                <h3 className="font-sans font-[900] text-2xl md:text-3xl uppercase tracking-tight text-black">
+                  🚀 ELEVE O NÍVEL DA SUA OPERAÇÃO HOJE
+                </h3>
+                <p className="text-neutral-700 text-sm md:text-base leading-relaxed font-semibold">
+                  A Vectura desenvolve aplicativos de gestão sob medida de altíssima performance para organizar sua empresa, integrados com campanhas de posicionamento e mídias sociais que de fato convertem em vendas.
+                </p>
+
+                {/* Elegant commercial list of benefits */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 font-sans font-bold text-xs text-neutral-800">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[#22C55E] text-base font-black">✓</span> Onboarding no mesmo dia
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[#22C55E] text-base font-black">✓</span> Zero burocracia ou taxas ocultas
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[#22C55E] text-base font-black">✓</span> Apps 100% responsivos e seguros
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[#22C55E] text-base font-black">✓</span> Suporte humanizado via WhatsApp
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column: Coupon Box & Commercial Action Buttons */}
+              <div className="lg:col-span-5 border-4 border-black bg-neutral-50 p-6 shadow-[4px_4px_0px_#000000] flex flex-col justify-between h-full relative">
+                
+                {/* Micro coupon box */}
+                <div className="border-2 border-dashed border-black p-3.5 bg-amber-50 mb-5 relative overflow-hidden flex flex-col items-center text-center text-black">
+                  <span className="font-mono text-[9px] font-bold text-neutral-400 uppercase tracking-widest block mb-1">CUPOM DE DESCONTO</span>
+                  <strong 
+                    onClick={() => {
+                      if (!couponApplied) {
+                        setCouponApplied(true);
+                        setShowCouponPopup(false);
+                      }
+                    }}
+                    className="font-mono text-lg font-black tracking-widest text-[#7C3AED] uppercase bg-white border border-black px-3 py-1 shadow-[2px_2px_0px_#000000] mb-2 select-all cursor-pointer hover:bg-neutral-50 transition-colors" 
+                    title="Clique para aplicar"
+                  >
+                    VECTURA10
+                  </strong>
+                  
+                  {couponApplied ? (
+                    <span className="font-mono text-[10px] text-green-600 font-extrabold flex items-center gap-1">
+                      ✅ DESCONTO DE 10% ATIVADO NA TABELA!
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCouponApplied(true);
+                        setShowCouponPopup(false);
+                      }}
+                      className="px-3 py-1 font-mono text-[10px] font-black uppercase text-black bg-[#22C55E] border-2 border-black shadow-[2px_2px_0px_#000000] hover:shadow-[1px_1px_0px_#000000] hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer"
+                    >
+                      🎟️ Ativar Cupom
+                    </button>
+                  )}
+                </div>
+
+                {/* Direct quick action sales buttons */}
+                <div className="space-y-3">
+                  <span className="font-mono text-[9px] text-neutral-400 font-bold uppercase tracking-wider block text-center">SELECIONE SEU PLANO DE ACELERAÇÃO:</span>
+                  
+                  <button
+                    onClick={() => {
+                      handleSelectPlan("start");
+                      const targetEl = document.getElementById("nossos-planos");
+                      if (targetEl) targetEl.scrollIntoView({ behavior: "smooth" });
+                    }}
+                    className="w-full py-3 px-4 border-2 border-black font-display font-black text-xs uppercase tracking-wider text-left flex justify-between items-center transition-all bg-white text-black hover:bg-neutral-100 shadow-[2px_2px_0px_#000000] hover:shadow-[1px_1px_0px_#000000] hover:translate-x-[1px] hover:translate-y-[1px] cursor-pointer"
+                  >
+                    <span>🛒 PLANO START</span>
+                    <span className="font-mono text-[11px] font-bold bg-[#FAF9F6] border border-black px-1.5 py-0.5 text-neutral-600">
+                      R$ {couponApplied ? "125,73" : "139,70"}/mês
+                    </span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      handleSelectPlan("padrao");
+                      const targetEl = document.getElementById("nossos-planos");
+                      if (targetEl) targetEl.scrollIntoView({ behavior: "smooth" });
+                    }}
+                    className={`w-full py-3 px-4 border-2 border-black font-display font-black text-xs uppercase tracking-wider text-left flex justify-between items-center transition-all shadow-[2px_2px_0px_#000000] hover:shadow-[1px_1px_0px_#000000] hover:translate-x-[1px] hover:translate-y-[1px] cursor-pointer ${getAccentBg()}`}
+                  >
+                    <span>⭐ PLANO PADRÃO</span>
+                    <span className="font-mono text-[11px] font-bold bg-black text-white px-1.5 py-0.5">
+                      R$ {couponApplied ? "287,64" : "319,60"}/mês
+                    </span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      handleSelectPlan("advanced");
+                      const targetEl = document.getElementById("nossos-planos");
+                      if (targetEl) targetEl.scrollIntoView({ behavior: "smooth" });
+                    }}
+                    className="w-full py-3 px-4 border-2 border-black font-display font-black text-xs uppercase tracking-wider text-left flex justify-between items-center transition-all bg-neutral-900 text-white hover:bg-neutral-800 shadow-[2px_2px_0px_#000000] hover:shadow-[1px_1px_0px_#000000] hover:translate-x-[1px] hover:translate-y-[1px] cursor-pointer"
+                  >
+                    <span>⚙️ PERSONALIZADO</span>
+                    <span className="font-mono text-[10px] font-bold bg-white text-black px-1.5 py-0.5">
+                      SOB MEDIDA
+                    </span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div id="nossos-planos" className="border-t-4 border-dashed border-neutral-700/50 my-16 scroll-mt-24" />
+
+          {/* Heading for pre-configured plans cards (Lá embaixo) */}
+          <div className="mb-8 text-center relative z-10">
+            <span className="font-mono text-xs text-neutral-400 uppercase font-black">
+              // DETALHES DOS PLANOS
+            </span>
+            <h3 className={`font-display font-black text-2xl md:text-3xl uppercase tracking-tight ${isInSimulador ? "text-white" : "text-black"}`}>
+              ESCOLHA SEU PLANO DE ACELERAÇÃO
+            </h3>
           </div>
 
           {/* Pricing cards */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch mb-12 relative z-10">
-            {plans.map((p) => (
-              <div
-                key={p.id}
-                className={`border-4 p-8 flex flex-col justify-between relative rounded-none transition-all duration-500
-                  ${isInSimulador 
-                    ? "bg-[#110E16] border-neutral-800 text-white shadow-[6px_6px_0px_rgba(255,255,255,0.04)]" 
-                    : "bg-white border-black text-black shadow-[6px_6px_0px_#000000]"
-                  }
-                  ${p.recommended && isInSimulador 
-                    ? `scale-100 lg:scale-[1.03] z-10 !border-[#7C3AED] !shadow-[0_0_30px_rgba(124,58,237,0.4)]` 
-                    : p.recommended 
-                    ? `scale-100 lg:scale-[1.03] z-10 ${getAccentShadowClass()}` 
-                    : ""
-                  }
-                `}
-              >
-                {p.recommended && (
-                  <div className={`absolute top-0 right-6 -translate-y-1/2 px-4 py-1.5 border-2 border-black font-mono text-[10px] font-black uppercase tracking-wider shadow-[2px_2px_0px_#000000] ${getAccentBg()}`}>
-                    ★★ Recomendado ★★
-                  </div>
-                )}
+            {plans.map((p) => {
+              const originalPrice = p.price;
+              const originalSetup = p.setupPrice;
+              const hasDiscount = couponApplied && originalPrice > 0;
+              const currentPrice = hasDiscount ? originalPrice * 0.9 : originalPrice;
+              const currentSetup = hasDiscount && originalSetup ? originalSetup * 0.9 : originalSetup;
 
-                <div>
-                  <span className={`font-mono text-[10px] uppercase font-black block tracking-widest mb-1 ${isInSimulador ? "text-purple-400" : "text-neutral-400"}`}>
-                    [ PLANO {p.name.toUpperCase()} ]
-                  </span>
-                  <h3 className={`font-sans font-[900] text-3xl mb-1 uppercase leading-none tracking-tight ${isInSimulador ? "text-white" : "text-black"}`}>
-                    {p.name}
-                  </h3>
-                  <p className={`text-sm mb-6 min-h-[40px] font-bold leading-normal uppercase text-[11px] tracking-wide mt-2 ${isInSimulador ? "text-neutral-400" : "text-neutral-600"}`}>
-                    {p.description}
-                  </p>
-
-                  <div className={`border-t-2 border-b-2 py-4 mb-6 flex items-center justify-between px-2 transition-colors duration-500
-                    ${isInSimulador ? "border-neutral-800 bg-[#191522]" : "border-black bg-neutral-50"}`}>
-                    <span className="font-mono text-xs text-neutral-400 uppercase font-black">Investimento</span>
-                    <div className="text-right">
-                      {p.id === "advanced" ? (
-                        <p className={`text-xl font-mono font-black uppercase ${isInSimulador ? "text-white" : "text-black"}`}>
-                          Sob Medida
-                          <span className="text-[9px] uppercase text-neutral-400 block font-bold mt-1 leading-none">Monte seu escopo</span>
-                        </p>
-                      ) : (
-                        <>
-                          {p.setupPrice && (
-                            <span className="text-[10px] text-neutral-400 font-mono block font-bold">
-                              Setup: R$ {p.setupPrice.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} (Único)
-                            </span>
-                          )}
-                          <p className={`text-2xl font-mono font-black ${getAccentTextClass()}`}>
-                            R$ {p.price.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                            <span className="text-[10px] uppercase text-neutral-400 inline font-bold ml-1">/mês</span>
-                          </p>
-                        </>
-                      )}
+              return (
+                <div
+                  key={p.id}
+                  className={`border-4 p-8 flex flex-col justify-between relative rounded-none transition-all duration-500
+                    ${isInSimulador 
+                      ? "bg-[#110E16] border-neutral-800 text-white shadow-[6px_6px_0px_rgba(255,255,255,0.04)]" 
+                      : "bg-white border-black text-black shadow-[6px_6px_0px_#000000]"
+                    }
+                    ${p.recommended && isInSimulador 
+                      ? `scale-100 lg:scale-[1.03] z-10 !border-[#7C3AED] !shadow-[0_0_30px_rgba(124,58,237,0.4)]` 
+                      : p.recommended 
+                      ? `scale-100 lg:scale-[1.03] z-10 ${getAccentShadowClass()}` 
+                      : ""
+                    }
+                  `}
+                >
+                  {p.recommended && (
+                    <div className={`absolute top-0 right-6 -translate-y-1/2 px-4 py-1.5 border-2 border-black font-mono text-[10px] font-black uppercase tracking-wider shadow-[2px_2px_0px_#000000] ${getAccentBg()}`}>
+                      ★★ Recomendado ★★
                     </div>
+                  )}
+
+                  <div className="text-left">
+                    <span className={`font-mono text-[10px] uppercase font-black block tracking-widest mb-1 ${isInSimulador ? "text-purple-400" : "text-neutral-400"}`}>
+                      [ PLANO {p.name.toUpperCase()} ]
+                    </span>
+                    <h3 className={`font-sans font-[900] text-3xl mb-1 uppercase leading-none tracking-tight ${isInSimulador ? "text-white" : "text-black"}`}>
+                      {p.name}
+                    </h3>
+                    <p className={`text-sm mb-6 min-h-[40px] font-bold leading-normal uppercase text-[11px] tracking-wide mt-2 ${isInSimulador ? "text-neutral-400" : "text-neutral-600"}`}>
+                      {p.description}
+                    </p>
+
+                    <div className={`border-t-2 border-b-2 py-4 mb-6 flex items-center justify-between px-2 transition-colors duration-500
+                      ${isInSimulador ? "border-neutral-800 bg-[#191522]" : "border-black bg-neutral-50"}`}>
+                      <span className="font-mono text-xs text-neutral-400 uppercase font-black">Investimento</span>
+                      <div className="text-right">
+                        {p.id === "advanced" ? (
+                          <p className={`text-xl font-mono font-black uppercase ${isInSimulador ? "text-white" : "text-black"}`}>
+                            Sob Medida
+                            <span className="text-[9px] uppercase text-neutral-400 block font-bold mt-1 leading-none">Alinhamento de escopo</span>
+                          </p>
+                        ) : (
+                          <>
+                            {originalSetup && (
+                              <span className="text-[10px] text-neutral-400 font-mono block font-bold">
+                                Setup:{" "}
+                                {hasDiscount ? (
+                                  <>
+                                    <span className="line-through mr-1 text-neutral-400">R$ {originalSetup.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+                                    <strong className="text-green-500">R$ {currentSetup!.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</strong>
+                                  </>
+                                ) : (
+                                  `R$ ${originalSetup.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`
+                                )}{" "}
+                                (Único)
+                              </span>
+                            )}
+                            <div className="flex flex-col items-end">
+                              {hasDiscount && (
+                                <span className="text-[10px] text-neutral-400 font-mono line-through block font-bold leading-none mb-1">
+                                  R$ {originalPrice.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}/mês
+                                </span>
+                              )}
+                              <p className={`text-2xl font-mono font-black ${getAccentTextClass()}`}>
+                                R$ {currentPrice.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                                <span className="text-[10px] uppercase text-neutral-400 inline font-bold ml-1">/mês</span>
+                              </p>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    <ul className="space-y-3 mb-8">
+                      {p.features.map((feature, i) => (
+                        <li key={i} className={`flex items-start gap-2.5 text-sm font-medium leading-tight ${isInSimulador ? "text-neutral-300" : "text-neutral-800"}`}>
+                          <span className={`mt-0.5 w-4 h-4 shrink-0 rounded-full border border-black flex items-center justify-center font-bold text-[10px] ${p.recommended ? getAccentBg() : "bg-neutral-200 text-black"}`}>
+                            ✔
+                          </span>
+                          <span>{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
 
-                  <ul className="space-y-3 mb-8">
-                    {p.features.map((feature, i) => (
-                      <li key={i} className={`flex items-start gap-2.5 text-sm font-medium leading-tight ${isInSimulador ? "text-neutral-300" : "text-neutral-800"}`}>
-                        <span className={`mt-0.5 w-4 h-4 shrink-0 rounded-full border border-black flex items-center justify-center font-bold text-[10px] ${p.recommended ? getAccentBg() : "bg-neutral-200 text-black"}`}>
-                          ✔
-                        </span>
-                        <span>{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  <div className={`pt-4 border-t border-dashed ${isInSimulador ? "border-neutral-800" : "border-neutral-200"}`}>
+                    <button
+                      id={`active-plan-select-${p.id}`}
+                      onClick={() => {
+                        handleSelectPlan(p.id);
+                        const targetEl = document.getElementById("personalizacao-simulador");
+                        if (targetEl) targetEl.scrollIntoView({ behavior: "smooth" });
+                      }}
+                      className={`w-full py-4 font-bold border-2 border-black shadow-[4px_4px_0px_#000000] hover:shadow-[1px_1px_0px_#000000] hover:translate-x-[3px] hover:translate-y-[3px] transition-all uppercase cursor-pointer text-sm
+                        ${selectedPlan === p.id 
+                          ? getAccentBg() 
+                          : isInSimulador 
+                          ? "bg-neutral-800 text-white hover:bg-neutral-700"
+                          : "bg-white text-black hover:bg-neutral-100"
+                        }`}
+                    >
+                      {selectedPlan === p.id ? "✓ Plano Selecionado" : "Selecionar Plano"}
+                    </button>
+                  </div>
                 </div>
-
-                <div className={`pt-4 border-t border-dashed ${isInSimulador ? "border-neutral-800" : "border-neutral-200"}`}>
-                  <button
-                    id={`active-plan-select-${p.id}`}
-                    onClick={() => {
-                      handleSelectPlan(p.id);
-                      const targetEl = document.getElementById("builder-area");
-                      if (targetEl) targetEl.scrollIntoView({ behavior: "smooth" });
-                    }}
-                    className={`w-full py-4 font-bold border-2 border-black shadow-[4px_4px_0px_#000000] hover:shadow-[1px_1px_0px_#000000] hover:translate-x-[3px] hover:translate-y-[3px] transition-all uppercase cursor-pointer text-sm
-                      ${selectedPlan === p.id 
-                        ? getAccentBg() 
-                        : isInSimulador 
-                        ? "bg-neutral-800 text-white hover:bg-neutral-700"
-                        : "bg-white text-black hover:bg-neutral-100"
-                      }`}
-                  >
-                    {selectedPlan === p.id ? "✓ Plano Ativo no Simulador" : "Selecionar para Personalizar"}
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
-          {/* SIMULADOR DE ORÇAMENTO E CONTATO */}
-          <div id="builder-area" className={`border-4 border-black bg-white text-black shadow-[8px_8px_0px_#000000] hover:${getAccentShadowClass()} transition-all duration-300 relative rounded-none p-6 md:p-8 scroll-mt-24`}>
+
+
+          {/* SIMULADOR DE CONTRATO INTELIGENTE */}
+          <AnimatePresence>
+            {true && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.4 }}
+                id="personalizacao-simulador"
+                className="overflow-hidden scroll-mt-24 mb-12"
+              >
+                <div>
             <h3 className="font-sans font-[900] text-3xl uppercase tracking-tight mb-4 flex items-center gap-2">
               🧱 SIMULADOR DE CONTRATO INTELIGENTE
             </h3>
-            <p className="text-neutral-700 text-sm md:text-base max-w-2xl mb-8 font-medium">
+            <p className="text-white text-sm md:text-base max-w-2xl mb-8 font-medium" style={{ color: '#ffffff' }}>
               Ajuste as opções complementares abaixo para obter o link customizado definitivo do WhatsApp. Nenhuma negociação será engessada.
             </p>
 
@@ -1711,32 +1774,17 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* 2. Choose WhatsApp destination */}
-                <div className="border-2 border-black bg-amber-50 p-4 font-mono text-xs shadow-[2px_2px_0px_#000000]">
-                  <label className="font-mono text-xs font-bold uppercase text-neutral-500 block mb-2">
-                    ETAPA 2: ENVIO DIRETO E EXCLUSIVO
-                  </label>
-                  <p className="text-neutral-700 font-semibold leading-relaxed">
-                    Sua proposta de orçamento será enviada diretamente e de forma segura para o WhatsApp de atendimento comercial da Vectura: <strong className="text-[#7C3AED] font-black text-sm block mt-1">(85) 98682-8425</strong>.
-                  </p>
-                  <span className="text-[10px] text-neutral-500 font-mono mt-2 block font-semibold">
-                    * Não é necessário preencher seu número, o contato é imediato pelo botão abaixo.
-                  </span>
-                </div>
-
-                {/* 3. Custom Configurator (Always Visible) */}
-                <div>
-                  {selectedPlan !== "advanced" && (
-                    <div className="bg-[#7C3AED] text-white font-mono text-[11px] font-black uppercase p-3 border-2 border-black mb-6 flex items-center justify-between shadow-[3px_3px_0px_#000000]">
-                      <span>Preset {selectedPlan === "start" ? "Start" : "Padrão"} Ativo</span>
-                      <span className="text-[9px] bg-black text-white px-2 py-0.5 border border-white font-sans font-bold">Modifique qualquer opção para customizar</span>
-                    </div>
-                  )}
+                {/* 3. Custom Configurator (Active Only for Personalized) */}
+                <div className={selectedPlan === "advanced" ? "block" : "hidden"}>
+                  <div className="bg-[#7C3AED] text-white font-mono text-[11px] font-black uppercase p-3 border-2 border-black mb-6 flex items-center justify-between shadow-[3px_3px_0px_#000000]">
+                    <span>⚙️ MODO CUSTOMIZAÇÃO ATIVO</span>
+                    <span className="text-[9px] bg-black text-white px-2 py-0.5 border border-white font-sans font-bold">Configure abaixo</span>
+                  </div>
                   <div className="space-y-6">
                       {/* Software & Apps Options */}
                       <div>
                         <label className="font-mono text-xs font-bold uppercase text-neutral-500 block mb-3">
-                          ETAPA 3: ESCOLHA OS SOFTWARES & APPS (SISTEMAS E ADESÃO)
+                          ETAPA 2: ESCOLHA OS SOFTWARES & APPS (SISTEMAS E ADESÃO)
                         </label>
                         <div className="flex flex-col gap-3">
                           
@@ -1755,7 +1803,7 @@ export default function App() {
                                 <span className="text-[10px] text-[#7C3AED] font-bold block mt-1">+ R$ 49,90/mês para atualizações e manutenção</span>
                               </div>
                             </div>
-                            <span className={`font-mono font-bold text-xs md:text-sm border-2 px-2 py-0.5 shrink-0 ml-2 shadow-[2px_2px_0px_#000000] transition-colors ${getAccentBadgeBg()}`}>R$ 450,00 (Único)</span>
+                            <span className={`font-mono font-bold text-xs md:text-sm border-2 px-2 py-0.5 shrink-0 ml-2 shadow-[2px_2px_0px_#000000] transition-colors ${getAccentBadgeBg()}`}>R$ 499,90 (Único)</span>
                           </label>
 
                           <label className="p-3 border-2 border-black flex items-start justify-between bg-neutral-50 select-none cursor-pointer hover:bg-neutral-100 transition-colors">
@@ -1768,12 +1816,12 @@ export default function App() {
                                 onChange={(e) => setCustomApps(prev => ({ ...prev, vendas: e.target.checked }))}
                               />
                               <div>
-                                <strong className="text-sm font-bold text-black uppercase font-display block">Vectura Vendas</strong>
-                                <span className="text-xs text-neutral-500 block leading-tight">Sistema PDV, controle rápido de vendas, estoque local de produtos e orçamentos.</span>
+                                <strong className="text-sm font-bold text-black uppercase font-display block">Vectura Vendas (Site + Sistema)</strong>
+                                <span className="text-xs text-neutral-500 block leading-tight">Site completo com sistema de gestão de vendas integrado para veículos, acessórios e autopeças. Área de compras com carrinho e cupons para clientes, mais área admin para propostas de veículos, recibos e contratos automáticos.</span>
                                 <span className="text-[10px] text-[#7C3AED] font-bold block mt-1">+ R$ 39,90/mês para atualizações e manutenção</span>
                               </div>
                             </div>
-                            <span className={`font-mono font-bold text-xs md:text-sm border-2 px-2 py-0.5 shrink-0 ml-2 shadow-[2px_2px_0px_#000000] transition-colors ${getAccentBadgeBg()}`}>R$ 199,90 (Único)</span>
+                            <span className={`font-mono font-bold text-xs md:text-sm border-2 px-2 py-0.5 shrink-0 ml-2 shadow-[2px_2px_0px_#000000] transition-colors ${getAccentBadgeBg()}`}>R$ 216,00 (Único)</span>
                           </label>
 
                           <label className="p-3 border-2 border-black flex items-start justify-between bg-neutral-50 select-none cursor-pointer hover:bg-neutral-100 transition-colors">
@@ -1791,7 +1839,7 @@ export default function App() {
                                 <span className="text-[10px] text-[#7C3AED] font-bold block mt-1">+ R$ 49,90/mês para mensalidade e licença</span>
                               </div>
                             </div>
-                            <span className={`font-mono font-bold text-xs md:text-sm border-2 px-2 py-0.5 shrink-0 ml-2 shadow-[2px_2px_0px_#000000] transition-colors ${getAccentBadgeBg()}`}>R$ 59,90 (Adesão)</span>
+                            <span className={`font-mono font-bold text-xs md:text-sm border-2 px-2 py-0.5 shrink-0 ml-2 shadow-[2px_2px_0px_#000000] transition-colors ${getAccentBadgeBg()}`}>R$ 65,00 (Adesão)</span>
                           </label>
 
                           <label className="p-3 border-2 border-black flex items-start justify-between bg-neutral-50 select-none cursor-pointer hover:bg-neutral-100 transition-colors">
@@ -1809,7 +1857,7 @@ export default function App() {
                                 <span className="text-[10px] text-[#7C3AED] font-bold block mt-1">+ R$ 49,90/mês para mensalidade e licença</span>
                               </div>
                             </div>
-                            <span className={`font-mono font-bold text-xs md:text-sm border-2 px-2 py-0.5 shrink-0 ml-2 shadow-[2px_2px_0px_#000000] transition-colors ${getAccentBadgeBg()}`}>R$ 59,90 (Adesão)</span>
+                            <span className={`font-mono font-bold text-xs md:text-sm border-2 px-2 py-0.5 shrink-0 ml-2 shadow-[2px_2px_0px_#000000] transition-colors ${getAccentBadgeBg()}`}>R$ 65,00 (Adesão)</span>
                           </label>
 
                           <label className="p-3 border-2 border-black flex items-start justify-between bg-neutral-50 select-none cursor-pointer hover:bg-neutral-100 transition-colors">
@@ -1827,7 +1875,7 @@ export default function App() {
                                 <span className="text-[10px] text-[#7C3AED] font-bold block mt-1">+ R$ 49,90/mês para mensalidade e licença</span>
                               </div>
                             </div>
-                            <span className={`font-mono font-bold text-xs md:text-sm border-2 px-2 py-0.5 shrink-0 ml-2 shadow-[2px_2px_0px_#000000] transition-colors ${getAccentBadgeBg()}`}>R$ 59,90 (Adesão)</span>
+                            <span className={`font-mono font-bold text-xs md:text-sm border-2 px-2 py-0.5 shrink-0 ml-2 shadow-[2px_2px_0px_#000000] transition-colors ${getAccentBadgeBg()}`}>R$ 65,00 (Adesão)</span>
                           </label>
 
                           <label className="p-3 border-2 border-black flex items-start justify-between bg-neutral-50 select-none cursor-pointer hover:bg-neutral-100 transition-colors">
@@ -1845,7 +1893,7 @@ export default function App() {
                                 <span className="text-[10px] text-[#7C3AED] font-bold block mt-1">+ R$ 49,90/mês para mensalidade e licença</span>
                               </div>
                             </div>
-                            <span className={`font-mono font-bold text-xs md:text-sm border-2 px-2 py-0.5 shrink-0 ml-2 shadow-[2px_2px_0px_#000000] transition-colors ${getAccentBadgeBg()}`}>R$ 59,90 (Adesão)</span>
+                            <span className={`font-mono font-bold text-xs md:text-sm border-2 px-2 py-0.5 shrink-0 ml-2 shadow-[2px_2px_0px_#000000] transition-colors ${getAccentBadgeBg()}`}>R$ 65,00 (Adesão)</span>
                           </label>
 
                         </div>
@@ -1854,7 +1902,7 @@ export default function App() {
                       {/* Social Media Selector Options */}
                       <div className="border-t border-black pt-4">
                         <label className="font-mono text-xs font-bold uppercase text-neutral-500 block mb-3">
-                          ETAPA 4: GESTÃO DE REDES SOCIAIS (ORGANIZAÇÃO MENSAL INCLUSA)
+                          ETAPA 3: GESTÃO DE REDES SOCIAIS (ORGANIZAÇÃO MENSAL INCLUSA)
                         </label>
                         
                         <div className="space-y-4">
@@ -1899,7 +1947,7 @@ export default function App() {
                               <span className="font-mono font-bold text-sm bg-white border-2 border-black px-3 py-1 text-[#7C3AED]">
                                 {customVideosPerWeek === 0 
                                   ? "Nenhum" 
-                                  : `R$ ${customVideosPerWeek === 1 ? "99,90" : customVideosPerWeek === 2 ? "179,90" : "249,90"}/mês`}
+                                  : `R$ ${customVideosPerWeek === 1 ? "149,90" : customVideosPerWeek === 2 ? "269,90" : "374,90"}/mês`}
                               </span>
                             </div>
                             <div className="flex items-center gap-4 mt-3">
@@ -1935,13 +1983,141 @@ export default function App() {
                                 <span className="text-xs text-neutral-500 block leading-tight">Design de logotipo completo, manual de paleta de cores e reestruturação estratégica da bio e feed.</span>
                               </div>
                             </div>
-                            <span className={`font-mono font-bold text-xs md:text-sm border-2 px-2 py-0.5 shrink-0 ml-2 shadow-[2px_2px_0px_#000000] transition-colors ${getAccentBadgeBg()}`}>R$ 299,90 (Único)</span>
+                            <span className={`font-mono font-bold text-xs md:text-sm border-2 px-2 py-0.5 shrink-0 ml-2 shadow-[2px_2px_0px_#000000] transition-colors ${getAccentBadgeBg()}`}>R$ 399,90 (Único)</span>
                           </label>
 
                         </div>
                       </div>
                     </div>
                   </div>
+
+                  {/* Standard Plan Details & Benefits */}
+                  {selectedPlan !== "advanced" && (
+                    <div className="space-y-6 text-black mt-4">
+                      <div className={`p-4 border-2 border-black ${selectedPlan === "start" ? "bg-emerald-50/70" : "bg-purple-50/70"} shadow-[3px_3px_0px_#000000]`}>
+                        <span className="font-mono text-[9px] uppercase font-black text-neutral-500 block mb-1">PLANO {selectedPlan === "start" ? "START" : "PADRÃO"} ATIVO</span>
+                        <h4 className="font-display font-black text-lg md:text-xl uppercase tracking-tight text-neutral-900 leading-tight">
+                          {selectedPlan === "start" ? "🚀 VECTURA START: Perfeito para Validar e Crescer" : "⭐ VECTURA PADRÃO: Máxima Automação e Presença"}
+                        </h4>
+                        <p className="text-xs text-neutral-700 leading-relaxed font-semibold mt-1.5">
+                          {selectedPlan === "start" 
+                            ? "Um pacote cirúrgico desenhado para negócios locais estruturarem suas vendas, organizarem estoque e marcarem presença estratégica nas mídias de forma extremamente econômica."
+                            : "A solução completa definitiva para empresas que buscam automação robusta de vendas, controle total de equipe e forte presença semanal com mídias e vídeos de alta conversão."}
+                        </p>
+                      </div>
+
+                      {/* Benefícios detalhados */}
+                      <div>
+                        <label className="font-mono text-xs font-bold uppercase text-neutral-500 block mb-3 font-black">
+                          💡 DETALHES DOS BENEFÍCIOS INCLUSOS NO PACOTE
+                        </label>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {selectedPlan === "start" ? (
+                            <>
+                              <div className="p-3 border-2 border-black bg-white shadow-[2px_2px_0px_#000000]">
+                                <span className="text-xl">💻</span>
+                                <h5 className="font-display font-bold text-xs uppercase text-neutral-900 mt-1">Vectura Vendas (Site + Sistema)</h5>
+                                <p className="text-[11px] text-neutral-600 font-semibold leading-normal mt-1">
+                                  Site completo integrado com gestão de vendas de veículos, acessórios e autopeças. Área de compras com carrinho e cupons para clientes, mais área admin para propostas, recibos e contratos automáticos.
+                                </p>
+                              </div>
+                              <div className="p-3 border-2 border-black bg-white shadow-[2px_2px_0px_#000000]">
+                                <span className="text-xl">🎨</span>
+                                <h5 className="font-display font-bold text-xs uppercase text-neutral-900 mt-1">1 Post Semanal Estratégico</h5>
+                                <p className="text-[11px] text-neutral-600 font-semibold leading-normal mt-1">
+                                  Design profissional de artes estáticas ou carrossel de alta qualidade com legenda e roteiro prontos, focados na captação imediata de novos clientes.
+                                </p>
+                              </div>
+                              <div className="p-3 border-2 border-black bg-white shadow-[2px_2px_0px_#000000]">
+                                <span className="text-xl">📦</span>
+                                <h5 className="font-display font-bold text-xs uppercase text-neutral-900 mt-1">Infraestrutura em Nuvem</h5>
+                                <p className="text-[11px] text-neutral-600 font-semibold leading-normal mt-1">
+                                  Servidor extremamente rápido, backups periódicos automáticos e atualizações críticas inclusas na mensalidade para manter seus dados seguros.
+                                </p>
+                              </div>
+                              <div className="p-3 border-2 border-black bg-white shadow-[2px_2px_0px_#000000]">
+                                <span className="text-xl">⚡</span>
+                                <h5 className="font-display font-bold text-xs uppercase text-neutral-900 mt-1">Implantação Rápida</h5>
+                                <p className="text-[11px] text-neutral-600 font-semibold leading-normal mt-1">
+                                  Configuração do banco de dados e treinamento inicial completo realizado em até 48 horas úteis para você começar a faturar.
+                                </p>
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <div className="p-3 border-2 border-black bg-white shadow-[2px_2px_0px_#000000]">
+                                <span className="text-xl">🚀</span>
+                                <h5 className="font-display font-bold text-xs uppercase text-neutral-900 mt-1">Vectura Vendas (Site) + Ponto Digital</h5>
+                                <p className="text-[11px] text-neutral-600 font-semibold leading-normal mt-1">
+                                  Site completo com gestão de vendas de veículos e peças integrado, somado ao controle de entrada e saída de funcionários com ponto eletrônico digital.
+                                </p>
+                              </div>
+                              <div className="p-3 border-2 border-black bg-white shadow-[2px_2px_0px_#000000]">
+                                <span className="text-xl">🎬</span>
+                                <h5 className="font-display font-bold text-xs uppercase text-neutral-900 mt-1">Forte Impacto Social Media</h5>
+                                <p className="text-[11px] text-neutral-600 font-semibold leading-normal mt-1">
+                                  Postagens regulares (3 posts semanais) combinadas com a gravação/edição profissional de 1 Reels estratégico por semana para engajar e reter público.
+                                </p>
+                              </div>
+                              <div className="p-3 border-2 border-black bg-white shadow-[2px_2px_0px_#000000]">
+                                <span className="text-xl">✨</span>
+                                <h5 className="font-display font-bold text-xs uppercase text-neutral-900 mt-1">Identidade Visual Completa</h5>
+                                <p className="text-[11px] text-neutral-600 font-semibold leading-normal mt-1">
+                                  Construção de logotipo exclusivo, paleta comercial e reestruturação de feed do Instagram (biografia, destaques e paleta de cores).
+                                </p>
+                              </div>
+                              <div className="p-3 border-2 border-black bg-white shadow-[2px_2px_0px_#000000]">
+                                <span className="text-xl">🛡️</span>
+                                <h5 className="font-display font-bold text-xs uppercase text-neutral-900 mt-1">Suporte Executivo Estendido</h5>
+                                <p className="text-[11px] text-neutral-600 font-semibold leading-normal mt-1">
+                                  Canal direto com nossos especialistas para alterações de escopo, atualizações do feed e suporte técnico prioritário de emergência.
+                                </p>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Comparativo Comercial Direto e Organizado */}
+                      <div className="border-t-2 border-dashed border-neutral-300 pt-6">
+                        <label className="font-mono text-xs font-bold uppercase text-neutral-500 block mb-3 font-black">
+                          📊 TABELA COMPARATIVA DE ENTREGAS
+                        </label>
+                        <div className="border-2 border-black overflow-hidden font-sans text-xs shadow-[2px_2px_0px_#000000]">
+                          {/* Row Header */}
+                          <div className="grid grid-cols-12 bg-black text-white font-mono text-[9px] uppercase font-black p-2.5 text-center">
+                            <span className="col-span-5 text-left pl-2">REQUISITO / RECURSO</span>
+                            <span className="col-span-3">START</span>
+                            <span className="col-span-4 bg-purple-900">PADRÃO</span>
+                          </div>
+                          {/* Row 1 */}
+                          <div className="grid grid-cols-12 border-b border-black p-2 bg-neutral-50 text-center font-semibold text-[11px]">
+                            <span className="col-span-5 text-left pl-2 font-mono text-[9px] text-neutral-500 uppercase">Sistemas Inclusos</span>
+                            <span className="col-span-3 text-neutral-700">Vendas + Estoque</span>
+                            <span className="col-span-4 text-[#7C3AED] font-black bg-purple-50/50">Vendas + Ponto + Estoque</span>
+                          </div>
+                          {/* Row 2 */}
+                          <div className="grid grid-cols-12 border-b border-black p-2 bg-white text-center font-semibold text-[11px]">
+                            <span className="col-span-5 text-left pl-2 font-mono text-[9px] text-neutral-500 uppercase">Frequência Redes</span>
+                            <span className="col-span-3 text-neutral-700">1 Post/sem</span>
+                            <span className="col-span-4 text-[#7C3AED] font-black bg-purple-50/50">3 Posts + 1 Reels/sem</span>
+                          </div>
+                          {/* Row 3 */}
+                          <div className="grid grid-cols-12 border-b border-black p-2 bg-neutral-50 text-center font-semibold text-[11px]">
+                            <span className="col-span-5 text-left pl-2 font-mono text-[9px] text-neutral-500 uppercase">Identidade Visual</span>
+                            <span className="col-span-3 text-neutral-400">Opcional</span>
+                            <span className="col-span-4 text-[#7C3AED] font-black bg-purple-50/50">Completa Inclusa</span>
+                          </div>
+                          {/* Row 4 */}
+                          <div className="grid grid-cols-12 p-2 bg-white text-center font-semibold text-[11px]">
+                            <span className="col-span-5 text-left pl-2 font-mono text-[9px] text-neutral-500 uppercase">Suporte Comercial</span>
+                            <span className="col-span-3 text-neutral-700">Horário Comercial</span>
+                            <span className="col-span-4 text-[#7C3AED] font-black bg-purple-50/50">Prioritário Estendido</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
               </div>
 
@@ -1971,37 +2147,37 @@ export default function App() {
                           {customApps.appPersonalizado && (
                             <div className="flex justify-between text-xs text-neutral-700 font-semibold font-mono">
                               <span>+ App Personalizado (Adesão)</span>
-                              <span>R$ 450,00</span>
+                              <span>R$ 499,90</span>
                             </div>
                           )}
                           {customApps.vendas && (
                             <div className="flex justify-between text-xs text-neutral-700 font-semibold font-mono">
                               <span>+ Vectura Vendas (Adesão)</span>
-                              <span>R$ 199,90</span>
+                              <span>R$ 216,00</span>
                             </div>
                           )}
                           {customApps.mecflow && (
                             <div className="flex justify-between text-xs text-neutral-700 font-semibold font-mono">
                               <span>+ Vectura MecFlow (Adesão)</span>
-                              <span>R$ 59,90</span>
+                              <span>R$ 65,00</span>
                             </div>
                           )}
                           {customApps.estoque && (
                             <div className="flex justify-between text-xs text-neutral-700 font-semibold font-mono">
                               <span>+ Vectura Estoque (Adesão)</span>
-                              <span>R$ 59,90</span>
+                              <span>R$ 65,00</span>
                             </div>
                           )}
                           {customApps.quickService && (
                             <div className="flex justify-between text-xs text-neutral-700 font-semibold font-mono">
                               <span>+ Vectura Quick Service (Adesão)</span>
-                              <span>R$ 59,90</span>
+                              <span>R$ 65,00</span>
                             </div>
                           )}
                           {customApps.pontoEletronico && (
                             <div className="flex justify-between text-xs text-neutral-700 font-semibold font-mono">
                               <span>+ Vectura Ponto Eletrônico (Adesão)</span>
-                              <span>R$ 59,90</span>
+                              <span>R$ 65,00</span>
                             </div>
                           )}
                         </div>
@@ -2066,14 +2242,14 @@ export default function App() {
                             <div className="flex justify-between text-xs text-neutral-700 font-semibold font-mono">
                               <span>+ {customVideosPerWeek} Vídeos/semana</span>
                               <span>
-                                R$ {(customVideosPerWeek === 1 ? 99.90 : customVideosPerWeek === 2 ? 179.90 : 249.90).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                                R$ {(customVideosPerWeek === 1 ? 149.90 : customVideosPerWeek === 2 ? 269.90 : 374.90).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                               </span>
                             </div>
                           )}
                           {customVisualIdentity && (
                             <div className="flex justify-between text-xs text-neutral-700 font-semibold font-mono">
                               <span>+ Identidade Visual & Insta (Adesão)</span>
-                              <span>R$ 299,90</span>
+                              <span>R$ 399,90</span>
                             </div>
                           )}
                         </div>
@@ -2081,34 +2257,42 @@ export default function App() {
 
                       {/* Custom Plan final combined price display */}
                       <div className="space-y-2 pt-1">
-                        {getCustomPlanOneTimePrice() > 0 && (
+                        {getActivePlanOneTimePrice() > 0 && (
                           <div className="flex justify-between items-center text-xs text-black border-2 border-black p-2.5 bg-neutral-100 rounded-xs font-semibold">
                             <span className="font-mono text-[10px] uppercase font-black">PAGAMENTO ÚNICO (ADESÃO)</span>
-                            <span className="font-mono font-black">
-                              R$ {getCustomPlanOneTimePrice().toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                            </span>
+                            <div className="text-right">
+                              {couponApplied && (
+                                <span className="font-mono text-[9px] text-neutral-500 line-through block leading-none mb-0.5">
+                                  R$ {getCustomPlanOneTimePrice().toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                                </span>
+                              )}
+                              <span className="font-mono font-black">
+                                R$ {getActivePlanOneTimePrice().toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                              </span>
+                            </div>
                           </div>
                         )}
 
                         <div className="border-t-2 border-black pt-3 flex justify-between items-center bg-black text-white p-3 rounded-xs">
                           <span className="font-mono text-xs uppercase font-extrabold tracking-wider">MENSALIDADE RECORRENTE</span>
                           <div className="text-right">
+                            {couponApplied && (
+                              <span className="font-mono text-[10px] text-red-400 line-through block leading-none mb-0.5">
+                                R$ {getCustomPlanMonthlyPrice().toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                              </span>
+                            )}
                             <span className="font-mono font-black text-xl text-[#66FF66]">
-                              R$ {getCustomPlanMonthlyPrice().toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                              R$ {getActivePlanMonthlyPrice().toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                             </span>
                             <span className="text-[10px] text-neutral-400 font-mono block leading-[8px]">/mês</span>
                           </div>
                         </div>
-                      </div>
-                    </div>
 
-                    {/* Simulating code-like formatted message output */}
-                    <div className="mb-6 mt-4">
-                      <span className="font-mono text-[10px] text-neutral-500 block uppercase font-bold mb-1">
-                        MENSAGEM MONTADA PARA ENVIO:
-                      </span>
-                      <div className="bg-neutral-900 text-[#00FF66] font-mono p-3 text-xs border border-neutral-800 rounded-sm text-left max-h-[160px] overflow-y-auto block whitespace-pre-wrap">
-                        {getWhatsappMessageDraft()}
+                        {couponApplied && (
+                          <div className="bg-emerald-500/10 text-emerald-600 border border-emerald-500/30 text-[10px] font-mono font-bold uppercase p-2 text-center rounded-xs mt-1">
+                            🎟️ Cupom VECTURA10 Ativo (-10%)
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -2128,7 +2312,10 @@ export default function App() {
 
             </div>
           </div>
-        </section>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  </section>
 
         {/* --- INTERACTIVE FREQUENTLY ASKED QUESTIONS (FAQ) --- */}
         <section id="faq" className="mb-24 scroll-mt-24">
