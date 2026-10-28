@@ -313,7 +313,7 @@ export default function App() {
       metricLabel: "Tempo Médio",
       metricValue: "< 1 Minuto",
       accentText: "Agenda sincronizada em tempo real",
-      link: "https://vectura-agendamento-de-revis-o-177673192884.us-west1.run.app",
+      link: "https://vectura-booking.ai.studio",
       mockUI: {
         title: "Quick Service Booking",
         status: "Ativo: Produção",
@@ -369,6 +369,57 @@ export default function App() {
         title: "Instagram Insights Tracker",
         status: "Distribuição ativa",
         actionLabel: "Abrir Perfil Franklin Motos"
+      }
+    },
+    {
+      id: "pro-4-b",
+      title: "FutCearense",
+      category: "media",
+      tag: "Posts & Edição de Vídeo",
+      client: "FutCearense",
+      description: "Criação de posts e edições de vídeo com foco em dinamismo, engajamento esportivo e retenção de audiência no Instagram.",
+      metricLabel: "Escopo de Entrega",
+      metricValue: "Posts & Vídeos",
+      accentText: "Criação de posts e edições de vídeo",
+      link: "https://www.instagram.com/futcearense/",
+      mockUI: {
+        title: "Instagram Media Engine",
+        status: "Produção ativa",
+        actionLabel: "Abrir Perfil FutCearense"
+      }
+    },
+    {
+      id: "pro-4-c",
+      title: "Marcão da Ema",
+      category: "media",
+      tag: "Coordenação de Campanha",
+      client: "Marcão da Ema",
+      description: "Período eleitoral de 5 de agosto até 04 de outubro, coordenação completa de campanha.",
+      metricLabel: "Período Eleitoral",
+      metricValue: "05/Ago a 04/Out",
+      accentText: "Coordenação completa de campanha",
+      link: "https://www.instagram.com/marcaodaema/",
+      mockUI: {
+        title: "Campaign Media Command",
+        status: "Campanha concluída",
+        actionLabel: "Abrir Perfil Marcão da Ema"
+      }
+    },
+    {
+      id: "pro-4-d",
+      title: "Novo Jovem CE",
+      category: "media",
+      tag: "Posts & Copywriting",
+      client: "Novo Jovem CE",
+      description: "Criação de posts e organização do copy para fortalecimento da comunicação e engajamento estratégico no Instagram.",
+      metricLabel: "Escopo de Entrega",
+      metricValue: "Posts & Copy",
+      accentText: "Criação de posts e organização do copy",
+      link: "https://www.instagram.com/novojovem.ce/",
+      mockUI: {
+        title: "Social Copy & Design",
+        status: "Distribuição ativa",
+        actionLabel: "Abrir Perfil Novo Jovem CE"
       }
     },
     {
